@@ -14,7 +14,7 @@ def prepareCorpus(tolower = True, stemming = False, lemmatizing = True, dataFold
     lemmatizer = WordNetLemmatizer()
 
     print('Reading data')
-    train = pd.read_csv(join(dataFolder, '/originals/train.csv'))
+    train = pd.read_csv(join(dataFolder, 'originals/train.csv'))
 
     print('Building corpus')
     corpus = {}
