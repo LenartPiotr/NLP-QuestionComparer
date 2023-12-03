@@ -4,11 +4,27 @@ import pandas as pd
 import joblib
 
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
-from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+from sklearn.svm import LinearSVC, SVC
+from lightgbm import LGBMClassifier
+from xgboost import XGBClassifier
 
-def trainMultinomialNB(dataFolder = '../data', training = True, predicting = True):
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report, ConfusionMatrixDisplay, confusion_matrix
+
+def makeModel(modelstr):
+    if modelstr == 'MultinomialNB':
+        model = MultinomialNB()
+    elif modelstr == "LinearSVC":
+        model = LinearSVC()
+    elif modelstr == "SVC":
+        model = SVC()
+    elif modelstr == "XGBClassifier":
+        model = XGBClassifier()
+    elif modelstr == "LGBMClassifier":
+        model = LGBMClassifier()
+    return model
+
+def trainModel(dataFolder = '../data', training = True, predicting = True, model = "MultinomialNB"):
     print('Reading tfidf model')
     tfidfData = joblib.load(join(dataFolder, 'TfidfModel.model'))
     df = pd.read_csv(join(dataFolder, 'originals/train.csv'))

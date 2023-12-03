@@ -1,2 +1,2 @@
 from .prepareCorpus import *
-from .trainModels import *
+from .trainModels import trainModel
