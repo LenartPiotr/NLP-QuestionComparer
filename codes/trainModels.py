@@ -3,65 +3,36 @@ import numpy as np
 import pandas as pd
 import joblib
 
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.svm import LinearSVC, SVC
-from lightgbm import LGBMClassifier
-from xgboost import XGBClassifier
-
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, ConfusionMatrixDisplay, confusion_matrix
+from scipy.sparse import vstack
 
-def makeModel(modelstr):
-    if modelstr == 'MultinomialNB':
-        model = MultinomialNB()
-    elif modelstr == "LinearSVC":
-        model = LinearSVC()
-    elif modelstr == "SVC":
-        model = SVC()
-    elif modelstr == "XGBClassifier":
-        model = XGBClassifier()
-    elif modelstr == "LGBMClassifier":
-        model = LGBMClassifier()
-    return model
-
-def trainModel(dataFolder = '../data', training = True, predicting = True, model = "MultinomialNB"):
+def trainModelTfIdf(model, modelName, dataFolder = '../data', training = True, predicting = True):
     print('Reading tfidf model')
-    tfidfData = joblib.load(join(dataFolder, 'TfidfModel.model'))
-    df = pd.read_csv(join(dataFolder, 'originals/train.csv'))
+    df = joblib.load(join(dataFolder, 'TfidfDataframe.pkl'))
 
     if training:
         print('Preparing train and test data')
-        X = df
+        X = df['tfidf'].tolist()
         y = df['is_duplicate'].tolist()
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        print('Training MultinomialNB model')
-        model = MultinomialNB()
+        print(f'Training {modelName} model')
 
-        lastPercent = 0
-        for i in range(len(X_train)):
-            x_data = np.array([np.concatenate([tfidfData[X_train['qid1'].iloc[i] - 1].toarray()[0], tfidfData[X_train['qid2'].iloc[i] - 1].toarray()[0]])])
-            # print(x_data.shape)
-            model.partial_fit(x_data, [y_train[i]], classes=np.unique(y_train))
-            percent = round(i / len(X_train) * 100)
-            if percent > lastPercent:
-                print(str(percent) + '%')
-                lastPercent = percent
+        model.fit(vstack(X_train), y_train)
 
         print('Saving')
-        joblib.dump(model, join(dataFolder, 'MultinomialNB.model'))
+        joblib.dump(model, join(dataFolder, f'{modelName}.pkl'))
     else:
-        model = joblib.load(join(dataFolder, 'MultinomialNB.model'))
+        model = joblib.load(join(dataFolder, f'{modelName}.pkl'))
 
     if predicting:
         if not training:
-            X_test = df
-            y_test = df['is_duplicate']
+            X_test = df['tfidf'].tolist()
+            y_test = df['is_duplicate'].tolist()
         print('Predicting tests')
-        y_pred = []
-        for i in range(len(X_test)):
-            y_pred.extend([model.predict([np.concatenate([tfidfData[X_test['qid1'].iloc[i] - 1].toarray()[0], tfidfData[X_test['qid2'].iloc[i] - 1].toarray()[0]])])])
+        y_pred = model.predict(vstack(X_test))
 
         accuracy = accuracy_score(y_test, y_pred)
         print(f'Accuracy: {accuracy}')

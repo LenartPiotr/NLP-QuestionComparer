@@ -7,6 +7,7 @@ from nltk.tokenize.casual import casual_tokenize
 from nltk.stem.porter import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from scipy.sparse import hstack
 
 def prepareCorpus(tolower = True, stemming = False, lemmatizing = True, dataFolder = '../data'):
     nltk.download('wordnet')
@@ -39,8 +40,13 @@ def prepareCorpus(tolower = True, stemming = False, lemmatizing = True, dataFold
     model = TfidfVectorizer(tokenizer=custom_tokenize)
     data = model.fit_transform(np.array(items))
 
+    print('Merging')
+    train = pd.merge(train, pd.DataFrame({'qid1': range(1, data.shape[0] + 1), 'tfidf1': data}), on='qid1', how='left')
+    train = pd.merge(train, pd.DataFrame({'qid2': range(1, data.shape[0] + 1), 'tfidf2': data}), on='qid2', how='left')
+    train['tfidf'] = train.apply(lambda row: hstack([row['tfidf1'], row['tfidf2']]), axis=1)
+
     print('Saving Tfidf model')
-    joblib.dump(data, join(dataFolder, 'TfidfModel.model'))
+    joblib.dump(train, join(dataFolder, 'TfidfDataframe.pkl'))
     print('Done')
 
 # joblib.load()
