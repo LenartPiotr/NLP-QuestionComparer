@@ -1,2 +1,2 @@
 from .prepareCorpus import *
-from .trainModels import trainModelTfIdf
+from .trainModels import trainModelTfIdf, cosineSimilarity
