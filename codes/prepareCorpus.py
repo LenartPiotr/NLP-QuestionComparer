@@ -9,10 +9,26 @@ from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy.sparse import hstack
 
-def prepareCorpus(tolower = True, stemming = False, lemmatizing = True, dataFolder = '../data'):
-    nltk.download('wordnet')
-    stemmer = PorterStemmer()
-    lemmatizer = WordNetLemmatizer()
+nltk.download('wordnet')
+stemmer = PorterStemmer()
+lemmatizer = WordNetLemmatizer()
+
+stemming = False
+lemmatizing = True
+
+def custom_tokenize(text):
+        tokens = casual_tokenize(text)
+        if stemming:
+            tokens = [stemmer.stem(token) for token in tokens]
+        if lemmatizing:
+            tokens = [lemmatizer.lemmatize(token) for token in tokens]
+        tokens = [token.lower() for token in tokens]
+        return tokens
+
+def prepareCorpus(tolower = True, _stemming = False, _lemmatizing = True, dataFolder = '../data'):
+
+    stemming = _stemming
+    lemmatizing = _lemmatizing
 
     print('Reading data')
     train = pd.read_csv(join(dataFolder, 'originals/train.csv'))
@@ -26,19 +42,11 @@ def prepareCorpus(tolower = True, stemming = False, lemmatizing = True, dataFold
             if qid not in corpus:
                 corpus[qid] = quest if tolower else quest
 
-    def custom_tokenize(text):
-        tokens = casual_tokenize(text)
-        if stemming:
-            tokens = [stemmer.stem(token) for token in tokens]
-        if lemmatizing:
-            tokens = [lemmatizer.lemmatize(token) for token in tokens]
-        tokens = [token.lower() for token in tokens]
-        return tokens
-
     print('Tokenize')
     items = list(corpus.values())
     model = TfidfVectorizer(tokenizer=custom_tokenize)
     data = model.fit_transform(np.array(items))
+    joblib.dump(model, join(dataFolder, 'TfidfVectorizer.pkl'))
 
     print('Merging')
     train = pd.merge(train, pd.DataFrame({'qid1': range(1, data.shape[0] + 1), 'tfidf1': data}), on='qid1', how='left')
