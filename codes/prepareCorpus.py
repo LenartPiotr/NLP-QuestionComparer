@@ -25,7 +25,7 @@ def custom_tokenize(text):
         tokens = [token.lower() for token in tokens]
         return tokens
 
-def prepareCorpus(tolower = True, _stemming = False, _lemmatizing = True, dataFolder = '../data'):
+def prepareCorpus(tolower = True, _stemming = False, _lemmatizing = True, dataFolder = '../data', max_features=200000):
 
     stemming = _stemming
     lemmatizing = _lemmatizing
@@ -44,7 +44,7 @@ def prepareCorpus(tolower = True, _stemming = False, _lemmatizing = True, dataFo
 
     print('Tokenize')
     items = list(corpus.values())
-    model = TfidfVectorizer(tokenizer=custom_tokenize)
+    model = TfidfVectorizer(tokenizer=custom_tokenize, max_features=max_features)
     data = model.fit_transform(np.array(items))
     joblib.dump(model, join(dataFolder, 'TfidfVectorizer.pkl'))
 
